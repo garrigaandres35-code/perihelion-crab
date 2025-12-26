@@ -112,6 +112,14 @@ Framework para entrenamiento y ejecución de modelos de Machine Learning.
 - 📱 **Responsive**: Diseño adaptable a todos los dispositivos
 - 🎯 **Iconos Feather**: Sistema de iconos moderno
 
+### Gestión de Scraping 📊
+
+- **Indicadores de Estado**: Visualización granular del proceso de scraping:
+  - **P**: Programas (Web Scraping)
+  - **R**: Resultados (Web Scraping)
+  - **V**: Volantes (PDF Scraping)
+- **Sincronización de Estados**: Herramienta para auditar y corregir el estado de las competencias basado en archivos existentes.
+
 ## 🔧 Configuración del Menú
 
 El menú se configura mediante `config/menu_config.json`:

@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+
+{% block title %}Gestión de Scraping{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+    <h1 style="margin-bottom: 2rem;">
+        <i data-feather="download"></i>
+        Gestión de Scraping
+    </h1>
+
+    <!-- Competitions Selection Panel -->
+    <div class="card" style="margin-bottom: 2rem;">
+        <div class="card-header"
+            style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);">
+            <h3 class="card-title">
+                <i data-feather="list"></i>
+                Competencias para Procesar
+            </h3>
+        </div>
+        <div class="card-body">
+            <div class="form-group">
+                <label for="venue-filter">
+                    <i data-feather="filter"></i>
+                    Filtrar por Hipódromo
+                </label>
+                <select id="venue-filter" class="form-control" onchange="filterCompetitions()">
+                    <option value="all">Todos</option>
+                    {% for venue in venues %}
+                    <option value="{{ venue.abbreviation }}">{{ venue.name }} ({{ venue.abbreviation }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="table-container" style="max-height: 400px; overflow-y: auto;">
+                <table id="competitions-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Fecha</th>
+                            <th>Recinto</th>
+                            <th>Nombre</th>
+                            <th>Proceso</th>
+                            <th>Estado</th>
+                            <th>Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if scrapable_competitions %}
+                        {% for comp in scrapable_competitions %}
+                        <tr data-venue="{{ comp.venue.abbreviation }}">
+                            <td>{{ comp.id }}</td>
+                            <td>{{ comp.event_date.strftime('%Y-%m-%d') if comp.event_date else '-' }}</td>
+                            <td>{{ comp.venue.name }}</td>
+                            <td>{{ comp.name }}</td>
+                            <td>
+                                <!-- P: Programas, R: Resultados, V: Volantes -->
+                                <div class="btn-group btn-group-sm">
+                                    <span class="badge {{ 'badge-success' if comp.progress.P else 'badge-secondary' }}"
+                                        title="Programas">
+                                        P <i data-feather="{{ 'check-square' if comp.progress.P else 'square' }}"></i>
+                                    </span>
+                                    <span class="badge {{ 'badge-success' if comp.progress.R else 'badge-secondary' }}"
+                                        title="Resultados">
+                                        R <i data-feather="{{ 'check-square' if comp.progress.R else 'square' }}"></i>
+                                    </span>
+                                    <span class="badge {{ 'badge-success' if comp.progress.V else 'badge-secondary' }}"
+                                        title="Volantes">
+                                        V <i data-feather="{{ 'check-square' if comp.progress.V else 'square' }}"></i>
+                                    </span>
+                                </div>
+                            </td>
+                            <td>
+                                <span
+                                    class="badge {{ 'badge-success' if comp.status == 'Scraper' else 'badge-warning' if comp.status == 'Parcial' else 'badge-info' }}">
+                                    {{ comp.status }}
+                                </span>
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-primary" onclick="runScraping('{{ comp.id }}')">
+                                    <i data-feather="play"></i> Scraping
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        {% else %}
+                        <tr>
+                            <td colspan="7" style="text-align: center; color: var(--text-muted);">
+                                No hay competencias Activas o Parciales para procesar.
+                            </td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Live Logs Console -->
+    <div style="margin-bottom: 3rem;">
+        <div class="card" style="border: none; overflow: hidden; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);">
+            <div class="card-header"
+                style="background: #2d2d2d; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #444; padding: 0.5rem 1rem;">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <div style="display: flex; gap: 6px;">
+                        <div style="width: 12px; height: 12px; border-radius: 50%; background: #ff5f56;"></div>
+                        <div style="width: 12px; height: 12px; border-radius: 50%; background: #ffbd2e;"></div>
+                        <div style="width: 12px; height: 12px; border-radius: 50%; background: #27c93f;"></div>
+                    </div>
+                    <span
+                        style="font-family: 'Inter', sans-serif; font-size: 0.8rem; color: #aaa; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em;">
+                        System Terminal — Scraping Engine
+                    </span>
+                </div>
+                <button onclick="clearConsole()"
+                    style="background: transparent; border: none; color: #666; cursor: pointer; display: flex; align-items: center; gap: 0.25rem; font-size: 0.75rem; transition: color 0.2s;"
+                    onmouseover="this.style.color='#aaa'" onmouseout="this.style.color='#666'">
+                    <i data-feather="trash-2" style="width: 14px; height: 14px;"></i> LIMPIAR
+                </button>
+            </div>
+            <div id="live-log-container" style="
+                background-color: #1a1a1a; 
+                color: #e5e7eb; 
+                font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace; 
+                padding: 1.25rem; 
+                height: 300px;
+                overflow-y: auto;
+                font-size: 0.85rem;
+                line-height: 1.6;
+                scrollbar-width: thin;
+                scrollbar-color: #333 #1a1a1a;
+            ">
+                <div style="color: #4b5563; font-style: italic;">Esperando inicio de proceso...</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    feather.replace();
+
+    function filterCompetitions() {
+        const venue = document.getElementById('venue-filter').value;
+        const rows = document.querySelectorAll('#competitions-table tbody tr');
+
+        rows.forEach(row => {
+            if (venue === 'all' || row.dataset.venue === venue) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    }
+
+    let logInterval;
+    let isScrolledToBottom = true;
+
+    function formatLogLine(line) {
+        if (line.includes('ERROR')) return `<span style="color: #ef4444;">${line}</span>`;
+        if (line.includes('WARNING')) return `<span style="color: #f59e0b;">${line}</span>`;
+        if (line.includes('INFO')) return `<span style="color: #60a5fa;">${line}</span>`;
+        return line;
+    }
+
+    function clearConsole() {
+        document.getElementById('live-log-container').innerHTML = '';
+    }
+
+    function startLogPolling() {
+        if (logInterval) clearInterval(logInterval);
+        const logContainer = document.getElementById('live-log-container');
+
+        logInterval = setInterval(() => {
+            fetch('/api/scraping/process-logs')
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success && data.logs) {
+                        const logContent = data.logs.map(formatLogLine).join('<br>');
+                        logContainer.innerHTML = logContent;
+                        logContainer.scrollTop = logContainer.scrollHeight;
+                    }
+                });
+        }, 2000);
+    }
+
+    function stopLogPolling() {
+        if (logInterval) {
+            clearInterval(logInterval);
+            logInterval = null;
+        }
+    }
+
+    function runScraping(compId) {
+        if (!confirm('¿Iniciar proceso de scraping para esta competencia?')) return;
+
+        startLogPolling();
+
+        fetch('/api/scraping/competitions/run', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ competition_id: compId })
+        })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Scraping finalizado. Estado: ' + data.status);
+                    location.reload(); // Refresh to show new status
+                } else {
+                    alert('Error: ' + data.message);
+                }
+                stopLogPolling();
+            })
+            .catch(err => {
+                console.error(err);
+                alert('Error al ejecutar scraping');
+                stopLogPolling();
+            });
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,278 @@
+{% extends "base.html" %}
+
+{% block title %}Competencias Deportivas - Admin{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-content">
+        <h1><i data-feather="award"></i> Competencias Deportivas</h1>
+        <p>Administra las competencias y eventos deportivos</p>
+    </div>
+    <div style="display: flex; gap: 8px;">
+        <button id="sync-btn" onclick="syncStatus()" class="btn btn-secondary">
+            <i data-feather="refresh-cw"></i>
+            Sincronizar Estados
+        </button>
+        <button onclick="openModal('createModal')" class="btn btn-primary">
+            <i data-feather="plus-circle"></i>
+            Nueva Competencia
+        </button>
+    </div>
+</div>
+
+<div class="card mt-2">
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Recinto</th>
+                    <th>Fecha</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for comp in competitions %}
+                <tr>
+                    <td><strong>{{ comp.name }}</strong></td>
+                    <td>
+                        {% if comp.venue %}
+                        <span class="badge badge-info">{{ comp.venue.abbreviation }}</span>
+                        {{ comp.venue.name }}
+                        {% else %}
+                        <span class="text-muted">Sin asignar</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if comp.event_date %}
+                        {{ comp.event_date.strftime('%d/%m/%Y') }}
+                        {% else %}
+                        <span class="text-muted">Por definir</span>
+                        {% endif %}
+                    </td>
+                    <td>
+
+                        {% if not comp.active %}
+                        <span class="badge badge-error">Inactiva</span>
+                        {% else %}
+                        <span
+                            class="badge {{ 'badge-success' if comp.status == 'Scraper' else 'badge-warning' if comp.status == 'Parcial' else 'badge-info' }}">
+                            {{ comp.status }}
+                        </span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="actions">
+                            <button
+                                onclick="editCompetition('{{ comp.id }}', '{{ comp.name }}', '{{ comp.venue_id or '' }}', '{{ comp.event_date or '' }}')"
+                                class="btn btn-sm btn-secondary" title="Editar">
+                                <i data-feather="edit-2"></i>
+                            </button>
+                            <button onclick="deleteCompetition('{{ comp.id }}', '{{ comp.name }}')"
+                                class="btn btn-sm btn-error" title="Eliminar">
+                                <i data-feather="trash-2"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" class="text-center text-muted">No hay competencias registradas</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Create Modal -->
+<div id="createModal" class="modal-overlay">
+    <div class="modal">
+        <div class="modal-header">
+            <h3>Nueva Competencia</h3>
+            <button onclick="closeModal('createModal')" class="modal-close">
+                <i data-feather="x"></i>
+            </button>
+        </div>
+        <form action="{{ url_for('admin.create_competition') }}" method="POST">
+            <div class="form-group">
+                <label for="name">Nombre de la Competencia *</label>
+                <input type="text" id="name" name="name" required placeholder="Gran Premio Nacional">
+            </div>
+            <div class="form-group">
+                <label for="venue_id">Recinto</label>
+                <select id="venue_id" name="venue_id">
+                    <option value="">Seleccionar recinto...</option>
+                    {% for venue in venues %}
+                    <option value="{{ venue.id }}">{{ venue.abbreviation }} - {{ venue.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="event_date">Fecha (opcional)</label>
+                <input type="date" id="event_date" name="event_date">
+            </div>
+            <div class="modal-actions">
+                <button type="button" onclick="closeModal('createModal')" class="btn btn-secondary">Cancelar</button>
+                <button type="submit" class="btn btn-primary">Crear Competencia</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Edit Modal -->
+<div id="editModal" class="modal-overlay">
+    <div class="modal">
+        <div class="modal-header">
+            <h3>Editar Competencia</h3>
+            <button onclick="closeModal('editModal')" class="modal-close">
+                <i data-feather="x"></i>
+            </button>
+        </div>
+        <form id="editForm" method="POST">
+            <div class="form-group">
+                <label for="edit_name">Nombre de la Competencia *</label>
+                <input type="text" id="edit_name" name="name" required>
+            </div>
+            <div class="form-group">
+                <label for="edit_venue_id">Recinto</label>
+                <select id="edit_venue_id" name="venue_id">
+                    <option value="">Seleccionar recinto...</option>
+                    {% for venue in venues %}
+                    <option value="{{ venue.id }}">{{ venue.abbreviation }} - {{ venue.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="edit_event_date">Fecha (opcional)</label>
+                <input type="date" id="edit_event_date" name="event_date">
+            </div>
+            <div class="modal-actions">
+                <button type="button" onclick="closeModal('editModal')" class="btn btn-secondary">Cancelar</button>
+                <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--spacing-lg);
+    }
+
+    .page-header h1 {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .page-header p {
+        color: var(--text-muted);
+        margin-top: 0.25rem;
+    }
+
+    .actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .btn-sm {
+        padding: 0.4rem 0.6rem;
+    }
+
+    .btn-sm svg {
+        width: 16px;
+        height: 16px;
+    }
+
+    .text-muted {
+        color: var(--text-muted);
+    }
+
+    .modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.75rem;
+        margin-top: var(--spacing-md);
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    feather.replace();
+
+    function openModal(modalId) {
+        document.getElementById(modalId).classList.add('active');
+    }
+
+    function closeModal(modalId) {
+        document.getElementById(modalId).classList.remove('active');
+    }
+
+    function editCompetition(id, name, venueId, eventDate) {
+        document.getElementById('editForm').action = `/admin/competitions/${id}/update`;
+        document.getElementById('edit_name').value = name;
+        document.getElementById('edit_venue_id').value = venueId;
+        document.getElementById('edit_event_date').value = eventDate;
+        openModal('editModal');
+    }
+
+    async function deleteCompetition(compId, compName) {
+        if (!confirm(`¿Estás seguro de eliminar "${compName}"?`)) return;
+
+        try {
+            const response = await fetch(`/admin/competitions/${compId}/delete`, { method: 'POST' });
+            const data = await response.json();
+            if (data.success) {
+                location.reload();
+            } else {
+                alert(data.message);
+            }
+        } catch (error) {
+            alert('Error al eliminar competencia');
+        }
+    }
+
+    async function syncStatus() {
+        if (!confirm('¿Desea sincronizar el estado de todas las competencias basándose en los archivos existentes?')) return;
+
+        const btn = document.getElementById('sync-btn');
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i data-feather="loader" class="spin"></i> Sincronizando...';
+
+        try {
+            const response = await fetch('/admin/competitions/sync', { method: 'POST' });
+            const data = await response.json();
+
+            if (data.success) {
+                alert(data.message);
+                location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        } catch (error) {
+            console.error(error);
+            alert('Error al sincronizar');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+            feather.replace();
+        }
+    }
+
+    // Close modal on outside click
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) {
+                overlay.classList.remove('active');
+            }
+        });
+    });
+</script>
+{% endblock %}

@@ -10,8 +10,10 @@ Al trabajar en este repositorio, sigue estas directrices:
 
 ### 1. Sistema de Scraping
 - **Web**: Localizado en `app/modules/scraping/web/`. Usa `Playwright`. Preferir selectores robustos.
-- **PDF**: Localizado en `app/modules/scraping/pdf/`. Usa `PyMuPDF` y `Llama-Parse` para estructuras complejas.
-- **Persistencia**: Los datos deben pasar por validadores de `Pydantic` antes de guardarse en SQLite.
+- **PDF**: Localizado en `app/modules/scraping/pdf_scraper.py`. Usa `LlamaExtract` (LlamaIndex Cloud) en modo `PREMIUM`.
+  - **Optimización**: Se utilizan `system_prompts` específicos por hipódromo y `multimodal_fast_mode` para mejorar la velocidad.
+- **Persistencia**: Los datos deben pasar por validadores de `Pydantic` (`pdf_models.py`) antes de guardarse en SQLite.
+- **Verificación de Estado**: El estado del scraping (P/R/V) se determina mediante la existencia de archivos JSON en el sistema de archivos (`check_scraping_status` en `app/modules/scraping/utils.py`), no solo por la BD.
 
 ### 2. Interfaz de Usuario (UI)
 - **Estilo**: Vanilla CSS. Mantener estética "Dark Mode Premium" con glassmorphism.
