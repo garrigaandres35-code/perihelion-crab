@@ -111,7 +111,7 @@ def run_competition_scraping():
         # But PDFScraperManager.process_directory takes 'track'.
         # We'll run it and assume it handles what's there.
         pdf_manager = PDFScraperManager(track=hipodromo)
-        pdf_result = pdf_manager.process_directory(track=hipodromo)
+        pdf_result = pdf_manager.process_directory(track=hipodromo, target_date=fecha)
         logging_messages.append(f"PDFs: {pdf_result.get('processed', 0)} procesados, {pdf_result.get('failed', 0)} fallidos")
         
         # Determine Status
