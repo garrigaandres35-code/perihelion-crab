@@ -473,6 +473,7 @@ def api_get_meetings():
     """API to get meetings with filters"""
     date_str = request.args.get('date')
     competition_id = request.args.get('competition_id')
+    venue_id = request.args.get('venue_id')
     
     query = RaceMeeting.query
     
