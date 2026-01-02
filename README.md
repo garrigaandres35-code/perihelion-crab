@@ -1,0 +1,60 @@
+# Data Sports Lab (Perihelion-Crab)
+
+📊 **Un espacio para aficionados a la ciencia de datos en el mundo de las competencias deportivas online**
+
+## 🎯 Características
+
+- **Sistema de Scraping Modular**: Extracción de datos desde web y PDFs.
+- **Navegación Robusta**: `ResultsDetailScraper` con manejo automático de prompts ("Si"), esperas inteligentes y selección por dropdown.
+- **Batch Scraping UI**: Capacidad de procesar lotes de carreras filtradas secuencialmente desde la interfaz de administración.
+- **Estandarización de Datos**: Sistema heurístico para uniformar resultados de diferentes hipódromos (HCH 20 cols vs Estándar 12 cols).
+- **UI Moderna y Premium**: Interfaz dark mode con glassmorphism y micro-animaciones.
+- **Menú Dinámico**: Sistema configurable mediante JSON.
+- **Base de Datos SQLite**: Almacenamiento eficiente con SQLAlchemy.
+
+## 📁 Estructura del Proyecto
+
+```
+perihelion-crab/
+├── app/
+│   ├── routes/          # Blueprints de Flask
+│   ├── modules/         # Módulos de negocio (scraping, análisis, modelos)
+│   ├── static/          # CSS, JS, imágenes
+│   └── templates/       # Templates HTML (UI de Batch Scraping)
+├── data/                # Base de datos y datos scrapeados
+│   └── web_scraping/
+│       └── resultados_detalle/  # JSONs de resultados avanzados
+├── config/              # Configuraciones JSON
+└── tests/               # Tests unitarios
+```
+
+## 🚀 Instalación y Ejecución
+
+1. **Entorno**: `python -m venv venv` y `venv\Scripts\activate`.
+2. **Dependencias**: `pip install -r requirements.txt`.
+3. **Arranque**: `python run.py`.
+4. **Acceso**: `http://localhost:8080`.
+
+## 📊 Módulos de Scraping
+
+- **Web (Programas)**: Playwright estándar.
+- **Web (Resultados)**: `ResultsDetailScraper` con navegación por dropdown y detección de prompts.
+- **PDF**: Procesamiento IA (LlamaExtract) con fallback de Regex.
+
+## 🎨 Características de UI (Admin)
+
+- **Indicadores P/R/V**:
+  - **P**: Programas (Web List).
+  - **R**: Resultados Detallados (Carpeta `resultados_detalle`).
+  - **V**: Volantes (Extracción PDF AI).
+- **Batch Processing**: El botón "Procesar Filtrados" en la sección de Scraping permite ejecutar la cola de forma automática y secuencial.
+- **Filtros en Tiempo Real**: Filtrado dinámico por estado o hipódromo sin recargar la página.
+
+## 🧪 Testing
+
+```bash
+python -m pytest tests/
+```
+
+---
+**Desarrollado para análisis predictivo deportivo, comenzando con hípica chilena (HCH, CHS, VSC).**

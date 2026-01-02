@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Data Sports Lab{% endblock %}</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Feather Icons -->
+    <script src="https://unpkg.com/feather-icons"></script>
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a href="{{ url_for('main.index') }}" class="navbar-brand">
+                <i data-feather="trending-up"></i>
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo" style="height: 32px; width: 32px; border-radius: 8px;">
+                Data Sports Lab
+            </a>
+
+            <ul class="navbar-menu">
+                {% for item in menu_items %}
+                {% if item.submenu %}
+                <li class="nav-item dropdown">
+                    <a href="#" class="nav-link dropdown-toggle">
+                        <i data-feather="{{ item.icon }}"></i>
+                        {{ item.label }}
+                    </a>
+                    <div class="dropdown-menu">
+                        {% for subitem in item.submenu %}
+                        <a href="{{ subitem.route }}" class="dropdown-item">
+                            <i data-feather="{{ subitem.icon }}"></i>
+                            {{ subitem.label }}
+                        </a>
+                        {% endfor %}
+                    </div>
+                </li>
+                {% else %}
+                <li class="nav-item">
+                    <a href="{{ item.route }}" class="nav-link">
+                        <i data-feather="{{ item.icon }}"></i>
+                        {{ item.label }}
+                    </a>
+                </li>
+                {% endif %}
+                {% endfor %}
+            </ul>
+
+            <!-- User Menu -->
+            <div class="user-menu">
+                {% if current_user.is_authenticated %}
+                <div class="nav-item dropdown">
+                    <a href="#" class="nav-link dropdown-toggle user-trigger">
+                        <div class="user-avatar">
+                            <i data-feather="user"></i>
+                        </div>
+                        <span class="user-name">{{ current_user.name }}</span>
+                        <i data-feather="chevron-down" class="chevron"></i>
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-right">
+                        <div class="dropdown-header">
+                            <strong>{{ current_user.name }}</strong>
+                            <span>{{ current_user.profile.name | capitalize if current_user.profile else 'Usuario'
+                                }}</span>
+                        </div>
+                        <div class="dropdown-divider"></div>
+                        {% if current_user.is_admin %}
+                        <a href="{{ url_for('admin.users') }}" class="dropdown-item">
+                            <i data-feather="users"></i>
+                            Gestionar Usuarios
+                        </a>
+                        {% endif %}
+                        <a href="{{ url_for('auth.logout') }}" class="dropdown-item text-danger">
+                            <i data-feather="log-out"></i>
+                            Cerrar Sesión
+                        </a>
+                    </div>
+                </div>
+                {% else %}
+                <a href="{{ url_for('auth.login') }}" class="btn btn-primary btn-sm">
+                    <i data-feather="log-in"></i>
+                    Iniciar Sesión
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="flash-container">
+        {% for category, message in messages %}
+        <div class="flash-message flash-{{ category }}">
+            <i
+                data-feather="{% if category == 'error' %}alert-circle{% elif category == 'success' %}check-circle{% elif category == 'warning' %}alert-triangle{% else %}info{% endif %}"></i>
+            {{ message }}
+            <button class="flash-close" onclick="this.parentElement.remove()">
+                <i data-feather="x"></i>
+            </button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    <!-- Main Content -->
+    <main class="container">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer style="text-align: center; padding: 2rem; color: var(--text-muted); margin-top: 4rem;">
+        <p>&copy; 2024 Data Sports Lab. Ciencia de datos en competencias deportivas.</p>
+    </footer>
+
+    <!-- Custom JS -->
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+
+    <!-- Initialize Feather Icons -->
+    <script>
+        feather.replace();
+    </script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+
+</html>

@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}Análisis{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+    <div class="card" style="text-align: center;">
+        <div style="font-size: 4rem; margin-bottom: 1rem;">📊</div>
+        <h1>Módulo de Análisis</h1>
+        <p style="color: var(--text-secondary); font-size: 1.1rem; margin-top: 1rem;">
+            {{ message }}
+        </p>
+        <p style="color: var(--text-muted); margin-top: 2rem;">
+            Este módulo permitirá analizar datos históricos, identificar patrones y generar insights.
+        </p>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,239 @@
+{% extends "base.html" %}
+
+{% block title %}Recintos Deportivos - Admin{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-content">
+        <h1><i data-feather="map-pin"></i> Recintos Deportivos</h1>
+        <p>Administra los recintos donde se realizan las competencias</p>
+    </div>
+    <button onclick="openModal('createModal')" class="btn btn-primary">
+        <i data-feather="plus-circle"></i>
+        Nuevo Recinto
+    </button>
+</div>
+
+<div class="card mt-2">
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Abreviación</th>
+                    <th>País</th>
+                    <th>Competencias</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for venue in venues %}
+                <tr>
+                    <td>
+                        <strong>{{ venue.name }}</strong>
+                        {% if venue.description %}
+                        <br><small class="text-muted">{{ venue.description[:50] }}{% if venue.description|length > 50
+                            %}...{% endif %}</small>
+                        {% endif %}
+                    </td>
+                    <td><span class="badge badge-info">{{ venue.abbreviation }}</span></td>
+                    <td>{{ venue.country or '-' }}</td>
+                    <td>{{ venue.competitions.count() }}</td>
+                    <td>
+                        {% if venue.active %}
+                        <span class="badge badge-success">Activo</span>
+                        {% else %}
+                        <span class="badge badge-error">Inactivo</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="actions">
+                            <button
+                                onclick="editVenue({{ venue.id }}, '{{ venue.name }}', '{{ venue.description or '' }}', '{{ venue.abbreviation }}', '{{ venue.country or '' }}')"
+                                class="btn btn-sm btn-secondary" title="Editar">
+                                <i data-feather="edit-2"></i>
+                            </button>
+                            <button onclick="deleteVenue({{ venue.id }}, '{{ venue.name }}')"
+                                class="btn btn-sm btn-error" title="Eliminar">
+                                <i data-feather="trash-2"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="text-center text-muted">No hay recintos registrados</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Create Modal -->
+<div id="createModal" class="modal-overlay">
+    <div class="modal">
+        <div class="modal-header">
+            <h3>Nuevo Recinto</h3>
+            <button onclick="closeModal('createModal')" class="modal-close">
+                <i data-feather="x"></i>
+            </button>
+        </div>
+        <form action="{{ url_for('admin.create_venue') }}" method="POST">
+            <div class="form-group">
+                <label for="name">Nombre *</label>
+                <input type="text" id="name" name="name" required placeholder="Hipódromo de San Isidro">
+            </div>
+            <div class="form-group">
+                <label for="abbreviation">Abreviación *</label>
+                <input type="text" id="abbreviation" name="abbreviation" required placeholder="HSI" maxlength="20">
+            </div>
+            <div class="form-group">
+                <label for="country">País</label>
+                <input type="text" id="country" name="country" placeholder="Argentina">
+            </div>
+            <div class="form-group">
+                <label for="description">Descripción</label>
+                <textarea id="description" name="description" rows="3"
+                    placeholder="Descripción del recinto..."></textarea>
+            </div>
+            <div class="modal-actions">
+                <button type="button" onclick="closeModal('createModal')" class="btn btn-secondary">Cancelar</button>
+                <button type="submit" class="btn btn-primary">Crear Recinto</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Edit Modal -->
+<div id="editModal" class="modal-overlay">
+    <div class="modal">
+        <div class="modal-header">
+            <h3>Editar Recinto</h3>
+            <button onclick="closeModal('editModal')" class="modal-close">
+                <i data-feather="x"></i>
+            </button>
+        </div>
+        <form id="editForm" method="POST">
+            <div class="form-group">
+                <label for="edit_name">Nombre *</label>
+                <input type="text" id="edit_name" name="name" required>
+            </div>
+            <div class="form-group">
+                <label for="edit_abbreviation">Abreviación *</label>
+                <input type="text" id="edit_abbreviation" name="abbreviation" required maxlength="20">
+            </div>
+            <div class="form-group">
+                <label for="edit_country">País</label>
+                <input type="text" id="edit_country" name="country">
+            </div>
+            <div class="form-group">
+                <label for="edit_description">Descripción</label>
+                <textarea id="edit_description" name="description" rows="3"></textarea>
+            </div>
+            <div class="modal-actions">
+                <button type="button" onclick="closeModal('editModal')" class="btn btn-secondary">Cancelar</button>
+                <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--spacing-lg);
+    }
+
+    .page-header h1 {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .page-header p {
+        color: var(--text-muted);
+        margin-top: 0.25rem;
+    }
+
+    .actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .btn-sm {
+        padding: 0.4rem 0.6rem;
+    }
+
+    .btn-sm svg {
+        width: 16px;
+        height: 16px;
+    }
+
+    .text-muted {
+        color: var(--text-muted);
+    }
+
+    .modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.75rem;
+        margin-top: var(--spacing-md);
+    }
+
+    textarea {
+        resize: vertical;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    feather.replace();
+
+    function openModal(modalId) {
+        document.getElementById(modalId).classList.add('active');
+    }
+
+    function closeModal(modalId) {
+        document.getElementById(modalId).classList.remove('active');
+    }
+
+    function editVenue(id, name, description, abbreviation, country) {
+        document.getElementById('editForm').action = `/admin/venues/${id}/update`;
+        document.getElementById('edit_name').value = name;
+        document.getElementById('edit_description').value = description;
+        document.getElementById('edit_abbreviation').value = abbreviation;
+        document.getElementById('edit_country').value = country;
+        openModal('editModal');
+    }
+
+    async function deleteVenue(venueId, venueName) {
+        if (!confirm(`¿Estás seguro de eliminar "${venueName}"?`)) return;
+
+        try {
+            const response = await fetch(`/admin/venues/${venueId}/delete`, { method: 'POST' });
+            const data = await response.json();
+            if (data.success) {
+                location.reload();
+            } else {
+                alert(data.message);
+            }
+        } catch (error) {
+            alert('Error al eliminar recinto');
+        }
+    }
+
+    // Close modal on outside click
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) {
+                overlay.classList.remove('active');
+            }
+        });
+    });
+</script>
+{% endblock %}

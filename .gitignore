@@ -1,0 +1,58 @@
+*.pyc
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual Environment
+venv/
+env/
+ENV/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+data/database.db
+
+# IDE
+.vscode/
+.vs/
+.idea/
+*.swp
+*.swo
+
+# Environment variables
+.env.local
+.env.production
+.env
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Scraped data - IGNORE ALL DATA EXCEPT STRUCTURE
+data/web_scraping/
+data/pdf_scraping/
+data/scraped/
+!data/**/.gitkeep
+
+# Debug and Temporary files
+*.tmp
+*.bak
+table_dump.html
+headers.txt
+hch_headers.txt
+debug_*.py
+debug_*.png
+inspect_*.py
+verify_*.py
+sync_db_status.py
+run_sync.py
+cleanup_legacy_files.py
+create_admin.py
+import_all_data.py
+reset_scraping_data.py

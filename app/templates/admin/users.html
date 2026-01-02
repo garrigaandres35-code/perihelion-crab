@@ -1,0 +1,519 @@
+{% extends "base.html" %}
+
+{% block title %}Gestión de Usuarios - Admin{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-content">
+        <h1><i data-feather="users"></i> Gestión de Usuarios</h1>
+        <p>Administra los usuarios del sistema</p>
+    </div>
+    <a href="{{ url_for('auth.register') }}" class="btn btn-primary">
+        <i data-feather="user-plus"></i>
+        Nuevo Usuario
+    </a>
+</div>
+
+<div class="card mt-2">
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Usuario</th>
+                    <th>Email</th>
+                    <th>Perfil</th>
+                    <th>Estado</th>
+                    <th>Último Acceso</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td>
+                        <div class="user-cell">
+                            <div class="user-avatar-sm">
+                                <i data-feather="user"></i>
+                            </div>
+                            <strong class="editable-field" contenteditable="true" data-user-id="{{ user.id }}"
+                                data-field="name" data-original="{{ user.name }}">{{ user.name }}</strong>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="editable-field" contenteditable="true" data-user-id="{{ user.id }}"
+                            data-field="email" data-original="{{ user.email }}">{{ user.email }}</span>
+                    </td>
+                    <td>
+                        <form action="{{ url_for('admin.update_user', user_id=user.id) }}" method="POST"
+                            class="inline-form">
+                            <select name="profile_id" onchange="this.form.submit()" class="select-sm">
+                                {% for profile in profiles %}
+                                <option value="{{ profile.id }}" {% if user.profile_id==profile.id %}selected{% endif
+                                    %}>
+                                    {{ profile.name | capitalize }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </form>
+                    </td>
+                    <td>
+                        {% if user.active %}
+                        <span class="badge badge-success">Activo</span>
+                        {% else %}
+                        <span class="badge badge-error">Inactivo</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if user.last_login %}
+                        {{ user.last_login.strftime('%d/%m/%Y %H:%M') }}
+                        {% else %}
+                        <span class="text-muted">Nunca</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="actions">
+                            {% if user.id != current_user.id %}
+                            <button onclick="toggleUser({{ user.id }})"
+                                class="btn btn-sm {% if user.active %}btn-warning{% else %}btn-success{% endif %}"
+                                title="{% if user.active %}Desactivar{% else %}Activar{% endif %}">
+                                <i data-feather="{% if user.active %}user-x{% else %}user-check{% endif %}"></i>
+                            </button>
+                            <button onclick="openPasswordModal({{ user.id }}, '{{ user.name }}')"
+                                class="btn btn-sm btn-secondary" title="Cambiar contraseña">
+                                <i data-feather="key"></i>
+                            </button>
+                            <button class="btn btn-sm btn-error" disabled title="Eliminar (próximamente)">
+                                <i data-feather="trash-2"></i>
+                            </button>
+                            {% else %}
+                            <button onclick="openPasswordModal({{ user.id }}, '{{ user.name }}')"
+                                class="btn btn-sm btn-secondary" title="Cambiar contraseña">
+                                <i data-feather="key"></i>
+                            </button>
+                            <span class="text-muted" style="margin-left: 0.5rem;">Tu cuenta</span>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="text-center text-muted">No hay usuarios registrados</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal Cambiar Contraseña -->
+<div id="passwordModal" class="modal" style="display: none;">
+    <div class="modal-backdrop"></div>
+    <div class="modal-dialog">
+        <div class="modal-header">
+            <h3><i data-feather="key"></i> Cambiar Contraseña</h3>
+            <button class="modal-close" onclick="closePasswordModal()">
+                <i data-feather="x"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <p style="color: var(--text-secondary); margin-bottom: 1rem;">
+                Cambiar contraseña de: <strong id="passwordModalUserName"></strong>
+            </p>
+            <div class="form-group">
+                <label for="newPassword">
+                    <i data-feather="lock"></i>
+                    Nueva Contraseña
+                </label>
+                <input type="password" id="newPassword" placeholder="Mínimo 6 caracteres" minlength="6"
+                    onkeypress="if(event.key === 'Enter') changePassword()">
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closePasswordModal()">
+                <i data-feather="x-circle"></i>
+                Cancelar
+            </button>
+            <button class="btn btn-primary" onclick="changePassword()">
+                <i data-feather="save"></i>
+                Guardar
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--spacing-lg);
+    }
+
+    .page-header h1 {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .page-header p {
+        color: var(--text-muted);
+        margin-top: 0.25rem;
+    }
+
+    .user-cell {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .user-avatar-sm {
+        width: 32px;
+        height: 32px;
+        background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .user-avatar-sm svg {
+        width: 16px;
+        height: 16px;
+        color: white;
+    }
+
+    .inline-form {
+        display: inline;
+    }
+
+    .select-sm {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.85rem;
+        background: var(--bg-tertiary);
+        border: 1px solid var(--glass-border);
+        border-radius: var(--radius-sm);
+        color: var(--text-primary);
+        cursor: pointer;
+    }
+
+    .actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .btn-sm {
+        padding: 0.4rem 0.6rem;
+    }
+
+    .btn-sm svg {
+        width: 16px;
+        height: 16px;
+    }
+
+    .text-muted {
+        color: var(--text-muted);
+    }
+
+    /* Campos editables */
+    .editable-field {
+        padding: 0.25rem 0.5rem;
+        border-radius: var(--radius-sm);
+        transition: all var(--transition-base);
+        cursor: text;
+    }
+
+    .editable-field:hover {
+        background: rgba(99, 102, 241, 0.1);
+    }
+
+    .editable-field:focus {
+        outline: 2px solid var(--primary);
+        background: rgba(99, 102, 241, 0.15);
+    }
+
+    /* Modal */
+    .modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 1000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .modal-backdrop {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(4px);
+    }
+
+    .modal-dialog {
+        position: relative;
+        background: var(--glass-bg);
+        border: 1px solid var(--glass-border);
+        border-radius: var(--radius-xl);
+        width: 90%;
+        max-width: 500px;
+        max-height: 90vh;
+        overflow: auto;
+        box-shadow: var(--shadow-lg);
+        animation: modalSlideIn 0.3s ease-out;
+    }
+
+    @keyframes modalSlideIn {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.5rem;
+        border-bottom: 1px solid var(--glass-border);
+    }
+
+    .modal-header h3 {
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .modal-header h3 svg {
+        width: 24px;
+        height: 24px;
+        color: var(--primary);
+    }
+
+    .modal-close {
+        background: transparent;
+        border: none;
+        color: var(--text-muted);
+        cursor: pointer;
+        padding: 0.5rem;
+        border-radius: var(--radius-md);
+        transition: all var(--transition-base);
+    }
+
+    .modal-close:hover {
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
+    }
+
+    .modal-body {
+        padding: 1.5rem;
+    }
+
+    .modal-body .form-group {
+        margin-bottom: 0;
+    }
+
+    .modal-body label {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+        color: var(--text-secondary);
+        font-weight: 500;
+    }
+
+    .modal-body label svg {
+        width: 16px;
+        height: 16px;
+    }
+
+    .modal-body input {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        background: var(--bg-tertiary);
+        border: 1px solid var(--glass-border);
+        border-radius: var(--radius-md);
+        color: var(--text-primary);
+        font-size: 1rem;
+        transition: all var(--transition-base);
+    }
+
+    .modal-body input:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+    }
+
+    .modal-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.75rem;
+        padding: 1rem 1.5rem;
+        border-top: 1px solid var(--glass-border);
+    }
+
+    .modal-footer .btn {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .modal-footer .btn svg {
+        width: 16px;
+        height: 16px;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    feather.replace();
+
+    async function toggleUser(userId) {
+        try {
+            const response = await fetch(`/admin/users/${userId}/toggle`, { method: 'POST' });
+            const data = await response.json();
+            if (data.success) {
+                location.reload();
+            } else {
+                alert(data.message);
+            }
+        } catch (error) {
+            alert('Error al cambiar estado del usuario');
+        }
+    }
+
+    async function deleteUser(userId, userName) {
+        if (!confirm(`¿Estás seguro de eliminar a ${userName}?`)) return;
+
+        try {
+            const response = await fetch(`/admin/users/${userId}/delete`, { method: 'POST' });
+            const data = await response.json();
+            if (data.success) {
+                location.reload();
+            } else {
+                alert(data.message);
+            }
+        } catch (error) {
+            alert('Error al eliminar usuario');
+        }
+    }
+
+    // Edición inline de campos
+    document.addEventListener('DOMContentLoaded', function () {
+        const editableFields = document.querySelectorAll('.editable-field');
+
+        editableFields.forEach(field => {
+            // Guardar al presionar Enter
+            field.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    this.blur();
+                }
+            });
+
+            // Guardar al perder foco
+            field.addEventListener('blur', async function () {
+                const userId = this.dataset.userId;
+                const fieldName = this.dataset.field;
+                const newValue = this.textContent.trim();
+                const originalValue = this.dataset.original;
+
+                if (newValue === originalValue) return;
+
+                try {
+                    const response = await fetch(`/admin/users/${userId}/update-profile`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ field: fieldName, value: newValue })
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        this.dataset.original = newValue;
+                        this.style.backgroundColor = 'rgba(34, 197, 94, 0.2)';
+                        setTimeout(() => { this.style.backgroundColor = ''; }, 1000);
+                    } else {
+                        alert(data.message);
+                        this.textContent = originalValue;
+                    }
+                } catch (error) {
+                    alert('Error al actualizar el campo');
+                    this.textContent = originalValue;
+                }
+            });
+        });
+
+        // Inicializar Feather después de que el DOM esté listo
+        feather.replace();
+    });
+
+    // Modal de contraseña
+    let currentPasswordUserId = null;
+
+    function openPasswordModal(userId, userName) {
+        currentPasswordUserId = userId;
+        document.getElementById('passwordModalUserName').textContent = userName;
+        document.getElementById('newPassword').value = '';
+        document.getElementById('passwordModal').style.display = 'flex';
+    }
+
+    function closePasswordModal() {
+        document.getElementById('passwordModal').style.display = 'none';
+        currentPasswordUserId = null;
+    }
+
+    async function changePassword() {
+        const password = document.getElementById('newPassword').value.trim();
+
+        if (!password) {
+            alert('Ingresa una contraseña');
+            return;
+        }
+
+        if (password.length < 6) {
+            alert('La contraseña debe tener al menos 6 caracteres');
+            return;
+        }
+
+        try {
+            const response = await fetch(`/admin/users/${currentPasswordUserId}/change-password`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                alert(data.message);
+                closePasswordModal();
+            } else {
+                alert(data.message);
+            }
+        } catch (error) {
+            alert('Error al cambiar la contraseña');
+        }
+    }
+
+    // Cerrar modal al hacer clic fuera
+    window.onclick = function (event) {
+        const modal = document.getElementById('passwordModal');
+        if (event.target === modal) {
+            closePasswordModal();
+        }
+    }
+
+</script>
+{% endblock %}

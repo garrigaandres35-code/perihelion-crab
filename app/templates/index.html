@@ -1,0 +1,467 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Data Sports Lab{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+    <!-- Hero Section -->
+    <div class="hero-card">
+        <div class="hero-content">
+            <h1>📊 Data Sports Lab</h1>
+            <p>Un espacio para aficionados a la ciencia de datos en el mundo de las competencias deportivas online</p>
+        </div>
+        <div class="hero-actions">
+            {% if current_user.is_authenticated %}
+            <a href="{{ url_for('admin.competitions') }}" class="btn btn-primary btn-lg">
+                <i data-feather="plus-circle"></i>
+                Nueva Competencia
+            </a>
+            {% else %}
+            <a href="{{ url_for('auth.login') }}" class="btn btn-primary btn-lg">
+                <i data-feather="log-in"></i>
+                Iniciar Sesión
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Statistics Dashboard -->
+    <div class="dashboard-stats">
+        <div class="stat-card">
+            <div class="stat-icon venue-icon">
+                <i data-feather="map-pin"></i>
+            </div>
+            <div class="stat-content">
+                <h3>{{ stats.total_venues }}</h3>
+                <p>Recintos</p>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon comp-icon">
+                <i data-feather="award"></i>
+            </div>
+            <div class="stat-content">
+                <h3>{{ stats.total_competitions }}</h3>
+                <p>Competencias</p>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon active-icon">
+                <i data-feather="activity"></i>
+            </div>
+            <div class="stat-content">
+                <h3>Activo</h3>
+                <p>Sistema</p>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon calendar-icon">
+                <i data-feather="calendar"></i>
+            </div>
+            <div class="stat-content">
+                <h3>{{ today }}</h3>
+                <p>Fecha Actual</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="dashboard-grid">
+        <!-- Venues Section -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i data-feather="map-pin"></i>
+                    Recintos Deportivos
+                </h3>
+                {% if current_user.is_authenticated and current_user.is_admin %}
+                <a href="{{ url_for('admin.venues') }}" class="btn btn-sm btn-secondary">Gestionar</a>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                {% if stats.venues %}
+                <div class="venue-list">
+                    {% for venue in stats.venues %}
+                    <div class="venue-item">
+                        <div class="venue-info">
+                            <span class="venue-abbr">{{ venue.abbreviation }}</span>
+                            <div class="venue-details">
+                                <strong>{{ venue.name }}</strong>
+                                <span class="venue-country">{{ venue.country or 'Sin país' }}</span>
+                            </div>
+                        </div>
+                        <span class="badge badge-success">Activo</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <i data-feather="map-pin"></i>
+                    <p>No hay recintos configurados</p>
+                    {% if current_user.is_authenticated and current_user.is_admin %}
+                    <a href="{{ url_for('admin.venues') }}" class="btn btn-primary btn-sm">Crear Recinto</a>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Recent Competitions -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i data-feather="award"></i>
+                    Competencias Recientes
+                </h3>
+                {% if current_user.is_authenticated and current_user.is_admin %}
+                <a href="{{ url_for('admin.competitions') }}" class="btn btn-sm btn-secondary">Ver Todas</a>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                {% if stats.recent_competitions %}
+                <div class="competition-list">
+                    {% for comp in stats.recent_competitions %}
+                    <div class="competition-item">
+                        <div class="competition-info">
+                            <strong>{{ comp.name }}</strong>
+                            <div class="competition-meta">
+                                {% if comp.venue %}
+                                <span class="venue-badge">{{ comp.venue.abbreviation }}</span>
+                                {% endif %}
+                                {% if comp.event_date %}
+                                <span class="date-badge">
+                                    <i data-feather="calendar"></i>
+                                    {{ comp.event_date.strftime('%d/%m/%Y') }}
+                                </span>
+                                {% else %}
+                                <span class="date-badge pending">Por definir</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <span class="badge {% if comp.active %}badge-success{% else %}badge-error{% endif %}">
+                            {% if comp.active %}Activa{% else %}Inactiva{% endif %}
+                        </span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <i data-feather="award"></i>
+                    <p>No hay competencias registradas</p>
+                    {% if current_user.is_authenticated and current_user.is_admin %}
+                    <a href="{{ url_for('admin.competitions') }}" class="btn btn-primary btn-sm">Crear Competencia</a>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    {% if current_user.is_authenticated %}
+    <div class="quick-actions">
+        <h2>🚀 Acciones Rápidas</h2>
+        <div class="action-buttons">
+            <a href="{{ url_for('admin.dashboard') }}" class="action-btn">
+                <i data-feather="grid"></i>
+                <span>Dashboard Admin</span>
+            </a>
+            <a href="{{ url_for('admin.venues') }}" class="action-btn">
+                <i data-feather="map-pin"></i>
+                <span>Recintos</span>
+            </a>
+            <a href="{{ url_for('admin.competitions') }}" class="action-btn">
+                <i data-feather="award"></i>
+                <span>Competencias</span>
+            </a>
+            <a href="{{ url_for('admin.scraping') }}" class="action-btn">
+                <i data-feather="download"></i>
+                <span>Scraping</span>
+            </a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    .hero-card {
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(139, 92, 246, 0.15) 100%);
+        border: 1px solid var(--glass-border);
+        border-radius: var(--radius-xl);
+        padding: 3rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+
+    .hero-content h1 {
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+        background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .hero-content p {
+        color: var(--text-muted);
+        font-size: 1.1rem;
+    }
+
+    .btn-lg {
+        padding: 1rem 2rem;
+        font-size: 1rem;
+    }
+
+    .dashboard-stats {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: var(--glass-bg);
+        border: 1px solid var(--glass-border);
+        border-radius: var(--radius-lg);
+        padding: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        transition: all var(--transition-base);
+    }
+
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-lg);
+    }
+
+    .stat-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: var(--radius-md);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .stat-icon svg {
+        width: 24px;
+        height: 24px;
+        color: white;
+    }
+
+    .venue-icon {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    }
+
+    .comp-icon {
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    }
+
+    .active-icon {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    }
+
+    .calendar-icon {
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    }
+
+    .stat-content h3 {
+        font-size: 1.75rem;
+        margin: 0;
+        color: var(--text-primary);
+    }
+
+    .stat-content p {
+        margin: 0;
+        color: var(--text-muted);
+        font-size: 0.9rem;
+    }
+
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .card-title {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .card-title svg {
+        width: 20px;
+        height: 20px;
+    }
+
+    .venue-list,
+    .competition-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .venue-item,
+    .competition-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem;
+        background: var(--bg-tertiary);
+        border-radius: var(--radius-md);
+    }
+
+    .venue-info,
+    .competition-info {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .venue-abbr {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+        color: white;
+        padding: 0.5rem 0.75rem;
+        border-radius: var(--radius-sm);
+        font-weight: 600;
+        font-size: 0.85rem;
+    }
+
+    .venue-details {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .venue-country {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+    }
+
+    .competition-meta {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 0.25rem;
+    }
+
+    .venue-badge {
+        background: var(--primary);
+        color: white;
+        padding: 0.15rem 0.5rem;
+        border-radius: var(--radius-sm);
+        font-size: 0.75rem;
+    }
+
+    .date-badge {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        font-size: 0.8rem;
+        color: var(--text-muted);
+    }
+
+    .date-badge svg {
+        width: 12px;
+        height: 12px;
+    }
+
+    .date-badge.pending {
+        color: var(--warning);
+    }
+
+    .empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 2rem;
+        color: var(--text-muted);
+    }
+
+    .empty-state svg {
+        width: 48px;
+        height: 48px;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+
+    .quick-actions {
+        text-align: center;
+        margin-top: 2rem;
+    }
+
+    .quick-actions h2 {
+        margin-bottom: 1.5rem;
+    }
+
+    .action-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .action-btn {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 1.5rem 2rem;
+        background: var(--glass-bg);
+        border: 1px solid var(--glass-border);
+        border-radius: var(--radius-lg);
+        color: var(--text-primary);
+        text-decoration: none;
+        transition: all var(--transition-base);
+    }
+
+    .action-btn:hover {
+        background: var(--bg-tertiary);
+        transform: translateY(-3px);
+        box-shadow: var(--shadow-lg);
+    }
+
+    .action-btn svg {
+        width: 28px;
+        height: 28px;
+        color: var(--primary);
+    }
+
+    @media (max-width: 1024px) {
+        .dashboard-stats {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .dashboard-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .hero-card {
+            flex-direction: column;
+            text-align: center;
+            gap: 1.5rem;
+        }
+    }
+
+    @media (max-width: 640px) {
+        .dashboard-stats {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<script>
+    feather.replace();
+</script>
+{% endblock %}

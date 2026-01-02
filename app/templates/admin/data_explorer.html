@@ -1,0 +1,714 @@
+{% extends "base.html" %}
+
+{% block title %}Explorador de Datos - Admin{% endblock %}
+
+{% block extra_css %}
+<style>
+    .explorer-grid {
+        display: grid;
+        grid-template-columns: 350px 1fr;
+        gap: 1.5rem;
+        margin-top: 1rem;
+    }
+
+    .filter-panel {
+        position: sticky;
+        top: 2rem;
+        height: min-content;
+    }
+
+    .data-card {
+        margin-bottom: 2rem;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .data-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    }
+
+    .table-compact {
+        font-size: 0.85rem;
+    }
+
+    .table-compact th,
+    .table-compact td {
+        padding: 0.75rem 0.5rem;
+    }
+
+    .selectable-row {
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+
+    .selectable-row:hover {
+        background-color: rgba(99, 102, 241, 0.05) !important;
+    }
+
+    .selectable-row.active {
+        background-color: rgba(99, 102, 241, 0.1) !important;
+        border-left: 4px solid var(--primary);
+    }
+
+    .loading-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10;
+        border-radius: inherit;
+        backdrop-filter: blur(2px);
+    }
+
+    .dark-mode .loading-overlay {
+        background: rgba(15, 23, 42, 0.7);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: var(--text-muted);
+    }
+
+    .search-box {
+        position: relative;
+        margin-bottom: 1rem;
+    }
+
+    .search-box i {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-muted);
+        width: 16px;
+        height: 16px;
+    }
+
+    .search-box input {
+        padding-left: 36px;
+    }
+
+    .breadcrumb {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        font-size: 0.9rem;
+        color: var(--text-muted);
+    }
+
+    .breadcrumb-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .breadcrumb-item.active {
+        color: var(--primary);
+        font-weight: 600;
+    }
+
+    .info-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        padding: 0.2rem 0.6rem;
+        background: rgba(99, 102, 241, 0.1);
+        color: var(--primary);
+        border-radius: 1rem;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+
+    @media (max-width: 1024px) {
+        .explorer-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .filter-panel {
+            position: relative;
+            top: 0;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 1.5rem;">
+        <div>
+            <h1 style="margin-bottom: 0.25rem;">
+                <i data-feather="database"></i>
+                Explorador de Datos
+            </h1>
+            <p class="text-muted">Visualiza y analiza la información recolectada del ecosistema hípico.</p>
+        </div>
+        <div id="explorer-breadcrumb" class="breadcrumb" style="margin-bottom: 0;">
+            <div class="breadcrumb-item active">Reuniones</div>
+        </div>
+    </div>
+
+    <!-- Summary Dashboard -->
+    <div class="grid grid-4" style="gap: 1.5rem; margin-bottom: 2rem;">
+        <div class="card"
+            style="padding: 1.25rem; background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <div
+                        style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 600;">
+                        Reuniones</div>
+                    <div id="stat-meetings" style="font-size: 1.75rem; font-weight: 700; margin-top: 0.25rem;">0</div>
+                </div>
+                <div
+                    style="background: rgba(99, 102, 241, 0.2); padding: 0.75rem; border-radius: 0.75rem; color: var(--primary);">
+                    <i data-feather="calendar" style="width: 24px; height: 24px;"></i>
+                </div>
+            </div>
+        </div>
+        <div class="card"
+            style="padding: 1.25rem; background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.1) 100%);">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <div
+                        style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 600;">
+                        Carreras</div>
+                    <div id="stat-races" style="font-size: 1.75rem; font-weight: 700; margin-top: 0.25rem;">0</div>
+                </div>
+                <div
+                    style="background: rgba(16, 185, 129, 0.2); padding: 0.75rem; border-radius: 0.75rem; color: #10b981;">
+                    <i data-feather="flag" style="width: 24px; height: 24px;"></i>
+                </div>
+            </div>
+        </div>
+        <div class="card"
+            style="padding: 1.25rem; background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(217, 119, 6, 0.1) 100%);">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <div
+                        style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 600;">
+                        Actuaciones</div>
+                    <div id="stat-performances" style="font-size: 1.75rem; font-weight: 700; margin-top: 0.25rem;">0
+                    </div>
+                </div>
+                <div
+                    style="background: rgba(245, 158, 11, 0.2); padding: 0.75rem; border-radius: 0.75rem; color: #f59e0b;">
+                    <i data-feather="users" style="width: 24px; height: 24px;"></i>
+                </div>
+            </div>
+        </div>
+        <div class="card"
+            style="padding: 1.25rem; background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(37, 99, 235, 0.1) 100%);">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <div
+                        style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 600;">
+                        Filtros</div>
+                    <div id="stat-active-filters" style="font-size: 1.75rem; font-weight: 700; margin-top: 0.25rem;">0
+                    </div>
+                </div>
+                <div
+                    style="background: rgba(59, 130, 246, 0.2); padding: 0.75rem; border-radius: 0.75rem; color: #3b82f6;">
+                    <i data-feather="filter" style="width: 24px; height: 24px;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="explorer-grid">
+        <!-- Sidebar Filters -->
+        <aside class="filter-panel">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i data-feather="sliders"></i>
+                        Parámetros de Búsqueda
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label for="filter-date">
+                            <i data-feather="calendar" style="width: 14px; height: 14px;"></i>
+                            Fecha de Reunión
+                        </label>
+                        <input type="date" id="filter-date" class="form-control">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="filter-venue">
+                            <i data-feather="map-pin" style="width: 14px; height: 14px;"></i>
+                            Recinto / Hipódromo
+                        </label>
+                        <select id="filter-venue" class="form-control">
+                            <option value="">Todos los recintos</option>
+                            {% for venue in venues %}
+                            <option value="{{ venue.id }}">{{ venue.abbreviation }} - {{ venue.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="filter-competition">
+                            <i data-feather="award" style="width: 14px; height: 14px;"></i>
+                            Competencia Específica
+                        </label>
+                        <select id="filter-competition" class="form-control">
+                            <option value="">Todas las competencias</option>
+                        </select>
+                    </div>
+
+                    <button id="apply-filters" class="btn btn-primary btn-block" style="margin-top: 1rem;">
+                        <i data-feather="refresh-cw"></i>
+                        Actualizar Explorador
+                    </button>
+
+                    <button id="reset-filters" class="btn btn-outline btn-block"
+                        style="margin-top: 0.5rem; font-size: 0.85rem;">
+                        Limpiar Filtros
+                    </button>
+                </div>
+            </div>
+
+            <div class="card"
+                style="margin-top: 1.5rem; background: linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, rgba(5, 150, 105, 0.05) 100%); border-color: rgba(16, 185, 129, 0.2);">
+                <div class="card-body" style="padding: 1rem;">
+                    <div style="display: flex; gap: 0.75rem; align-items: flex-start;">
+                        <div
+                            style="background: rgba(16, 185, 129, 0.1); padding: 0.5rem; border-radius: 0.5rem; color: #10b981;">
+                            <i data-feather="cpu" style="width: 20px; height: 20px;"></i>
+                        </div>
+                        <div>
+                            <h4 style="margin: 0; font-size: 0.95rem;">ML Ready</h4>
+                            <p style="margin: 0.25rem 0 0 0; font-size: 0.8rem; color: var(--text-muted);">
+                                Estos datos están estructurados para alimentar modelos de predicción.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main>
+            <!-- Meetings Table Section -->
+            <section id="section-meetings" class="data-card card">
+                <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                    <h3 class="card-title">
+                        <i data-feather="calendar"></i>
+                        Reuniones Hípicas
+                    </h3>
+                    <div class="search-box" style="margin-bottom: 0; width: 250px;">
+                        <i data-feather="search"></i>
+                        <input type="text" id="search-meetings" class="form-control form-control-sm"
+                            placeholder="Buscar reunión...">
+                    </div>
+                </div>
+                <div class="card-body" style="padding: 0; position: relative;">
+                    <div id="loading-meetings" class="loading-overlay" style="display: none;">
+                        <div class="spinner"></div>
+                    </div>
+                    <div class="table-container" style="max-height: 400px; overflow-y: auto;">
+                        <table class="table-compact">
+                            <thead>
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Hipódromo</th>
+                                    <th>N° Reunión</th>
+                                    <th>Carreras</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-meetings">
+                                <!-- Data will be loaded via JS -->
+                                <tr>
+                                    <td colspan="5" class="empty-state">Aplica filtros para comenzar</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Races Table Section -->
+            <section id="section-races" class="data-card card" style="display: none;">
+                <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                    <h3 class="card-title">
+                        <i data-feather="flag"></i>
+                        Carreras de la Reunión <span id="selected-meeting-date" class="text-primary"></span>
+                    </h3>
+                    <div class="search-box" style="margin-bottom: 0; width: 250px;">
+                        <i data-feather="search"></i>
+                        <input type="text" id="search-races" class="form-control form-control-sm"
+                            placeholder="Filtrar carreras...">
+                    </div>
+                </div>
+                <div class="card-body" style="padding: 0; position: relative;">
+                    <div id="loading-races" class="loading-overlay" style="display: none;">
+                        <div class="spinner"></div>
+                    </div>
+                    <div class="table-container" style="max-height: 400px; overflow-y: auto;">
+                        <table class="table-compact">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Hora</th>
+                                    <th>Premio</th>
+                                    <th>Distancia</th>
+                                    <th>Superficie</th>
+                                    <th>Tipo</th>
+                                    <th>Part.</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-races">
+                                <!-- Loaded via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Performances Table Section -->
+            <section id="section-performances" class="data-card card" style="display: none;">
+                <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                    <h3 class="card-title">
+                        <i data-feather="users"></i>
+                        Resultados/Actuaciones - Carrera <span id="selected-race-num" class="text-primary"></span>
+                    </h3>
+                    <div style="display: flex; gap: 1rem; align-items: center;">
+                        <div id="race-details-tags"></div>
+                        <button id="export-csv" class="btn btn-sm btn-outline"
+                            style="color: #10b981; border-color: rgba(16, 185, 129, 0.3);">
+                            <i data-feather="download"></i> Exportar CSV
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body" style="padding: 0; position: relative;">
+                    <div id="loading-performances" class="loading-overlay" style="display: none;">
+                        <div class="spinner"></div>
+                    </div>
+                    <div class="table-container">
+                        <table class="table-compact">
+                            <thead>
+                                <tr>
+                                    <th>Pos.</th>
+                                    <th>Mandil</th>
+                                    <th>Ejemplar</th>
+                                    <th>Jinete</th>
+                                    <th>Preparador</th>
+                                    <th>Peso C.</th>
+                                    <th>Div.</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-performances">
+                                <!-- Loaded via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        feather.replace();
+
+        // Constants & State
+        const applyBtn = document.getElementById('apply-filters');
+        const resetBtn = document.getElementById('reset-filters');
+        const venueSelect = document.getElementById('filter-venue');
+        const compSelect = document.getElementById('filter-competition');
+        const exportBtn = document.getElementById('export-csv');
+        const meetingsBody = document.getElementById('tbody-meetings');
+        const racesBody = document.getElementById('tbody-races');
+        const perfsBody = document.getElementById('tbody-performances');
+
+        let allMeetings = [];
+        let allRaces = [];
+        let allPerfs = [];
+        let currentRaceId = null;
+
+        // --- Functions ---
+
+        async function loadCompetitions() {
+            const venueId = venueSelect.value;
+            compSelect.innerHTML = '<option value="">Todas las competencias</option>';
+
+            if (!venueId) return;
+
+            try {
+                const response = await fetch(`/api/data-explorer/competitions?venue_id=${venueId}`);
+                const comps = await response.json();
+                comps.forEach(c => {
+                    const opt = document.createElement('option');
+                    opt.value = c.id;
+                    opt.textContent = c.name;
+                    compSelect.appendChild(opt);
+                });
+            } catch (error) {
+                console.error("Error loading competitions:", error);
+            }
+        }
+
+        async function loadMeetings() {
+            const date = document.getElementById('filter-date').value;
+            const venue_id = venueSelect.value;
+            const competition_id = compSelect.value;
+
+            document.getElementById('loading-meetings').style.display = 'flex';
+
+            try {
+                const response = await fetch(`/admin/api/data-explorer/meetings?date=${date}&venue_id=${venue_id}&competition_id=${competition_id}`);
+                allMeetings = await response.json();
+                renderMeetings(allMeetings);
+
+                // Update Overview Stats
+                document.getElementById('stat-meetings').textContent = allMeetings.length;
+                let totalRaces = 0;
+                allMeetings.forEach(m => totalRaces += (m.races_count || 0));
+                document.getElementById('stat-races').textContent = totalRaces;
+
+                let activeFilters = 0;
+                if (date) activeFilters++;
+                if (venue_id) activeFilters++;
+                if (competition_id) activeFilters++;
+                document.getElementById('stat-active-filters').textContent = activeFilters;
+
+                // Hide other sections when reloading meetings
+                document.getElementById('section-races').style.display = 'none';
+                document.getElementById('section-performances').style.display = 'none';
+                updateBreadcrumb(['Reuniones']);
+            } catch (error) {
+                console.error("Error loading meetings:", error);
+            } finally {
+                document.getElementById('loading-meetings').style.display = 'none';
+            }
+        }
+
+        function renderMeetings(meetings) {
+            meetingsBody.innerHTML = '';
+
+            if (meetings.length === 0) {
+                meetingsBody.innerHTML = '<tr><td colspan="5" class="empty-state">No se encontraron reuniones</td></tr>';
+                return;
+            }
+
+            meetings.forEach(m => {
+                const row = document.createElement('tr');
+                row.className = 'selectable-row';
+                row.dataset.id = m.id;
+                row.dataset.date = m.date;
+
+                row.innerHTML = `
+                    <td><strong>${formatDate(m.date)}</strong></td>
+                    <td><span class="badge badge-info" style="font-weight:600">${m.venue_abbr}</span></td>
+                    <td>${m.number || '-'}</td>
+                    <td><span class="info-tag">${m.races_count} carreras</span></td>
+                    <td class="text-right"><i data-feather="chevron-right" style="width:16px"></i></td>
+                `;
+
+                row.onclick = () => selectMeeting(m, row);
+                meetingsBody.appendChild(row);
+            });
+            feather.replace();
+        }
+
+        async function selectMeeting(meeting, row) {
+            document.querySelectorAll('#tbody-meetings .selectable-row').forEach(r => r.classList.remove('active'));
+            row.classList.add('active');
+
+            document.getElementById('selected-meeting-date').textContent = `${meeting.venue_abbr} - ${formatDate(meeting.date)}`;
+            document.getElementById('section-races').style.display = 'block';
+            document.getElementById('section-performances').style.display = 'none';
+
+            updateBreadcrumb(['Reuniones', `${meeting.venue_abbr} ${formatDate(meeting.date)}`]);
+
+            document.getElementById('loading-races').style.display = 'flex';
+            racesBody.innerHTML = '';
+
+            try {
+                const response = await fetch(`/admin/api/data-explorer/races/${meeting.id}`);
+                allRaces = await response.json();
+                renderRaces(allRaces);
+                document.getElementById('section-races').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            } catch (error) {
+                console.error("Error loading races:", error);
+            } finally {
+                document.getElementById('loading-races').style.display = 'none';
+            }
+        }
+
+        function renderRaces(races) {
+            racesBody.innerHTML = '';
+            if (races.length === 0) {
+                racesBody.innerHTML = '<tr><td colspan="8" class="empty-state">No hay carreras registradas para esta reunión</td></tr>';
+                return;
+            }
+
+            races.forEach(r => {
+                const row = document.createElement('tr');
+                row.className = 'selectable-row';
+                row.dataset.id = r.id;
+
+                row.innerHTML = `
+                    <td><strong>${r.correlativo}</strong></td>
+                    <td><span style="color: var(--primary); font-weight:600">${r.time || '-'}</span></td>
+                    <td>${r.prize || '-'}</td>
+                    <td>${r.distance || '-'} m</td>
+                    <td><small class="text-muted">${r.surface || '-'}</small></td>
+                    <td><span class="badge" style="background: rgba(139, 92, 246, 0.1); color: #8b5cf6; font-size: 0.7rem;">${r.type || '-'}</span></td>
+                    <td>${r.performances_count}</td>
+                    <td class="text-right"><i data-feather="chevron-right" style="width:16px"></i></td>
+                `;
+
+                row.onclick = () => selectRace(r, row);
+                racesBody.appendChild(row);
+            });
+            feather.replace();
+        }
+
+        async function selectRace(race, row) {
+            document.querySelectorAll('#tbody-races .selectable-row').forEach(r => r.classList.remove('active'));
+            row.classList.add('active');
+
+            currentRaceId = race.id;
+            document.getElementById('selected-race-num').textContent = race.correlativo;
+            document.getElementById('section-performances').style.display = 'block';
+
+            const tagsDiv = document.getElementById('race-details-tags');
+            tagsDiv.innerHTML = `
+                <span class="info-tag"><i data-feather="award" style="width:12px"></i> ${race.prize}</span>
+                <span class="info-tag"><i data-feather="trending-up" style="width:12px"></i> ${race.distance}m</span>
+                <span class="info-tag"><i data-feather="layers" style="width:12px"></i> ${race.surface}</span>
+            `;
+
+            updateBreadcrumb(['Reuniones', 'Carreras', `Carrera ${race.correlativo}`]);
+
+            document.getElementById('loading-performances').style.display = 'flex';
+            perfsBody.innerHTML = '';
+
+            try {
+                const response = await fetch(`/admin/api/data-explorer/performances/${race.id}`);
+                allPerfs = await response.json();
+                renderPerformances(allPerfs);
+
+                // Update performances stat for this race
+                document.getElementById('stat-performances').textContent = allPerfs.length;
+
+                document.getElementById('section-performances').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            } catch (error) {
+                console.error("Error loading performances:", error);
+            } finally {
+                document.getElementById('loading-performances').style.display = 'none';
+                feather.replace();
+            }
+        }
+
+        function renderPerformances(perfs) {
+            perfsBody.innerHTML = '';
+            if (perfs.length === 0) {
+                perfsBody.innerHTML = '<tr><td colspan="7" class="empty-state">No hay resultados. ¿Ya realizaste el scraping de resultados?</td></tr>';
+                return;
+            }
+
+            perfs.forEach(p => {
+                const row = document.createElement('tr');
+                const isWinner = p.position === '1' || p.position === 1;
+                const posClass = isWinner ? 'font-weight: 700; color: #b45309; background: rgba(245, 158, 11, 0.05);' : '';
+                const posBadge = isWinner ? '🏆 ' : '';
+
+                row.innerHTML = `
+                    <td style="${posClass}">${posBadge}${p.position || '-'}</td>
+                    <td><span class="badge badge-outline">${p.mandil || '-'}</span></td>
+                    <td><strong>${p.horse}</strong></td>
+                    <td>${p.jockey}</td>
+                    <td><small class="text-muted">${p.trainer}</small></td>
+                    <td>${p.weight_horse || '-'} kg</td>
+                    <td><span style="font-weight:700; color: var(--primary)">${p.dividend ? p.dividend.toFixed(1) : '-'}</span></td>
+                `;
+                perfsBody.appendChild(row);
+            });
+        }
+
+        // --- Helpers ---
+
+        function formatDate(dateStr) {
+            if (!dateStr) return 'N/A';
+            const parts = dateStr.split('-');
+            if (parts.length !== 3) return dateStr;
+            return `${parts[2]}/${parts[1]}/${parts[0]}`;
+        }
+
+        function updateBreadcrumb(items) {
+            const container = document.getElementById('explorer-breadcrumb');
+            container.innerHTML = '';
+            items.forEach((item, index) => {
+                const isLast = index === items.length - 1;
+                const div = document.createElement('div');
+                div.className = `breadcrumb-item ${isLast ? 'active' : ''}`;
+                div.textContent = item;
+
+                if (!isLast) {
+                    const icon = document.createElement('i');
+                    icon.dataset.feather = 'chevron-right';
+                    icon.style.width = '14px';
+                    icon.style.margin = '0 4px';
+                    div.appendChild(icon);
+                }
+
+                container.appendChild(div);
+            });
+            feather.replace();
+        }
+
+        // --- Event Listeners ---
+
+        venueSelect.onchange = loadCompetitions;
+        applyBtn.onclick = loadMeetings;
+
+        resetBtn.onclick = () => {
+            document.getElementById('filter-date').value = '';
+            venueSelect.value = '';
+            compSelect.innerHTML = '<option value="">Todas las competencias</option>';
+            loadMeetings();
+        };
+
+        exportBtn.onclick = () => {
+            if (!currentRaceId) return;
+            window.location.href = `/api/data-explorer/export/performances/${currentRaceId}`;
+        };
+
+        document.getElementById('search-meetings').oninput = (e) => {
+            const val = e.target.value.toLowerCase();
+            const filtered = allMeetings.filter(m =>
+                (m.venue && m.venue.toLowerCase().includes(val)) ||
+                (m.venue_abbr && m.venue_abbr.toLowerCase().includes(val)) ||
+                (m.date && m.date.includes(val))
+            );
+            renderMeetings(filtered);
+        };
+
+        document.getElementById('search-races').oninput = (e) => {
+            const val = e.target.value.toLowerCase();
+            const filtered = allRaces.filter(r =>
+                (r.prize && r.prize.toLowerCase().includes(val)) ||
+                (r.type && r.type.toLowerCase().includes(val)) ||
+                (r.correlativo && r.correlativo.toString().includes(val))
+            );
+            renderRaces(filtered);
+        };
+
+        // Initial load
+        loadMeetings();
+    });
+</script>
+{% endblock %}

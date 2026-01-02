@@ -1,0 +1,77 @@
+{
+  "menu_items": [
+    {
+      "id": "home",
+      "label": "Inicio",
+      "icon": "home",
+      "route": "/",
+      "order": 1
+    },
+    {
+      "id": "admin",
+      "label": "Administración",
+      "icon": "settings",
+      "order": 2,
+      "submenu": [
+        {
+          "id": "dashboard",
+          "label": "Dashboard",
+          "icon": "grid",
+          "route": "/admin"
+        },
+        {
+          "id": "users",
+          "label": "Usuarios",
+          "icon": "users",
+          "route": "/admin/users"
+        },
+        {
+          "id": "venues",
+          "label": "Recintos",
+          "icon": "map-pin",
+          "route": "/admin/venues"
+        },
+        {
+          "id": "competitions",
+          "label": "Competencias",
+          "icon": "award",
+          "route": "/admin/competitions"
+        },
+        {
+          "id": "scraping",
+          "label": "Scraping",
+          "icon": "download",
+          "route": "/admin/scraping"
+        },
+        {
+          "id": "data_explorer",
+          "label": "Explorador de Datos",
+          "icon": "database",
+          "route": "/admin/data-explorer"
+        },
+        {
+          "id": "config",
+          "label": "Configuración",
+          "icon": "sliders",
+          "route": "/admin/config"
+        }
+      ]
+    },
+    {
+      "id": "analysis",
+      "label": "Análisis",
+      "icon": "bar-chart",
+      "route": "/analysis",
+      "order": 3,
+      "enabled": false
+    },
+    {
+      "id": "models",
+      "label": "Modelos",
+      "icon": "cpu",
+      "route": "/models",
+      "order": 4,
+      "enabled": false
+    }
+  ]
+}
