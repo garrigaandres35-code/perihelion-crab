@@ -30,3 +30,4 @@ if __name__ == '__main__':
         port=port,
         debug=debug_mode
     )
+# Reload trigger
