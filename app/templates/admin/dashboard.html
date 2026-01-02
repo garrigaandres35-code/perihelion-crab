@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block title %}Panel de Administración{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+    <h1 style="margin-bottom: 2rem;">
+        <i data-feather="settings"></i>
+        Panel de Administración
+    </h1>
+
+    <!-- System Status -->
+    <div class="grid grid-2" style="margin-bottom: 2rem;">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Estado del Sistema</h3>
+            </div>
+            <div class="card-body">
+                <div style="display: flex; flex-direction: column; gap: 1rem;">
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>Scraping:</span>
+                        <span class="badge badge-success">Habilitado</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>Base de Datos:</span>
+                        <span class="badge badge-success">Conectada</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>Versión:</span>
+                        <span>1.0.0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Configuraciones</h3>
+            </div>
+            <div class="card-body">
+                <p style="margin-bottom: 1rem;">Total de configuraciones: {{ configs|length }}</p>
+                <a href="{{ url_for('admin.config') }}" class="btn btn-primary">
+                    <i data-feather="sliders"></i>
+                    Gestionar Configuración
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Scraping Logs -->
+    <h2 style="margin-bottom: 1.5rem;">📋 Registro de Scraping Reciente</h2>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Tipo</th>
+                    <th>Fuente</th>
+                    <th>Estado</th>
+                    <th>Registros</th>
+                    <th>Inicio</th>
+                    <th>Finalización</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if logs %}
+                {% for log in logs %}
+                <tr>
+                    <td>{{ log.id }}</td>
+                    <td>{{ log.source_type }}</td>
+                    <td>{{ log.source_name or '-' }}</td>
+                    <td>
+                        {% if log.status == 'success' %}
+                        <span class="badge badge-success">Éxito</span>
+                        {% elif log.status == 'error' %}
+                        <span class="badge badge-error">Error</span>
+                        {% else %}
+                        <span class="badge badge-warning">{{ log.status }}</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ log.records_processed }}</td>
+                    <td>{{ log.started_at.strftime('%d/%m/%Y %H:%M') if log.started_at else '-' }}</td>
+                    <td>{{ log.completed_at.strftime('%d/%m/%Y %H:%M') if log.completed_at else '-' }}</td>
+                </tr>
+                {% endfor %}
+                {% else %}
+                <tr>
+                    <td colspan="7" style="text-align: center; color: var(--text-muted);">
+                        No hay registros de scraping aún
+                    </td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Quick Actions -->
+    <div style="margin-top: 2rem;">
+        <h2 style="margin-bottom: 1.5rem;">Acciones Rápidas</h2>
+        <div class="flex gap-2">
+            <a href="{{ url_for('admin.scraping') }}" class="btn btn-primary">
+                <i data-feather="download"></i>
+                Gestionar Scraping
+            </a>
+            <a href="{{ url_for('admin.config') }}" class="btn btn-secondary">
+                <i data-feather="sliders"></i>
+                Configuración
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+    feather.replace();
+</script>
+{% endblock %}
