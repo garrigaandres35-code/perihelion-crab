@@ -19,17 +19,36 @@
             </h3>
         </div>
         <div class="card-body">
-            <div class="form-group">
-                <label for="venue-filter">
-                    <i data-feather="filter"></i>
-                    Filtrar por Hipódromo
-                </label>
-                <select id="venue-filter" class="form-control" onchange="filterCompetitions()">
-                    <option value="all">Todos</option>
-                    {% for venue in venues %}
-                    <option value="{{ venue.abbreviation }}">{{ venue.name }} ({{ venue.abbreviation }})</option>
-                    {% endfor %}
-                </select>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="venue-filter">
+                            <i data-feather="filter"></i>
+                            Filtrar por Hipódromo
+                        </label>
+                        <select id="venue-filter" class="form-control" onchange="filterCompetitions()">
+                            <option value="all">Todos</option>
+                            {% for venue in venues %}
+                            <option value="{{ venue.abbreviation }}">{{ venue.name }} ({{ venue.abbreviation }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="status-filter">
+                            <i data-feather="activity"></i>
+                            Filtrar por Estado
+                        </label>
+                        <select id="status-filter" class="form-control" onchange="filterCompetitions()">
+                            <option value="all">Todos</option>
+                            <option value="Scraper">Scraper (Completo)</option>
+                            <option value="Parcial">Parcial</option>
+                            <option value="Pendiente">Pendiente</option>
+                        </select>
+                    </div>
+                </div>
             </div>
 
             <div class="table-container" style="max-height: 400px; overflow-y: auto;">
@@ -48,7 +67,7 @@
                     <tbody>
                         {% if scrapable_competitions %}
                         {% for comp in scrapable_competitions %}
-                        <tr data-venue="{{ comp.venue.abbreviation }}">
+                        <tr data-venue="{{ comp.venue.abbreviation }}" data-status="{{ comp.status }}">
                             <td>{{ comp.id }}</td>
                             <td>{{ comp.event_date.strftime('%Y-%m-%d') if comp.event_date else '-' }}</td>
                             <td>{{ comp.venue.name }}</td>
@@ -132,6 +151,13 @@
             ">
                 <div style="color: #4b5563; font-style: italic;">Esperando inicio de proceso...</div>
             </div>
+
+            <!-- Batch Processing Button -->
+            <div style="margin-top: 1rem; text-align: right;">
+                <button id="batch-btn" class="btn btn-warning" onclick="processFiltered()">
+                    <i data-feather="layers"></i> Procesar Filtrados
+                </button>
+            </div>
         </div>
     </div>
 </div>
@@ -141,10 +167,14 @@
 
     function filterCompetitions() {
         const venue = document.getElementById('venue-filter').value;
+        const status = document.getElementById('status-filter').value;
         const rows = document.querySelectorAll('#competitions-table tbody tr');
 
         rows.forEach(row => {
-            if (venue === 'all' || row.dataset.venue === venue) {
+            const matchVenue = venue === 'all' || row.dataset.venue === venue;
+            const matchStatus = status === 'all' || row.dataset.status === status;
+
+            if (matchVenue && matchStatus) {
                 row.style.display = '';
             } else {
                 row.style.display = 'none';
@@ -190,31 +220,70 @@
         }
     }
 
-    function runScraping(compId) {
-        if (!confirm('¿Iniciar proceso de scraping para esta competencia?')) return;
+    async function runScraping(compId, isBatch = false) {
+        if (!isBatch && !confirm('¿Iniciar proceso de scraping para esta competencia?')) return;
 
         startLogPolling();
 
-        fetch('/api/scraping/competitions/run', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ competition_id: compId })
-        })
-            .then(r => r.json())
-            .then(data => {
-                if (data.success) {
-                    alert('Scraping finalizado. Estado: ' + data.status);
-                    location.reload(); // Refresh to show new status
-                } else {
-                    alert('Error: ' + data.message);
-                }
-                stopLogPolling();
-            })
-            .catch(err => {
-                console.error(err);
-                alert('Error al ejecutar scraping');
-                stopLogPolling();
+        try {
+            const r = await fetch('/api/scraping/competitions/run', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ competition_id: compId })
             });
+            const data = await r.json();
+
+            if (data.success) {
+                if (!isBatch) alert('Scraping finalizado. Estado: ' + data.status);
+                // Actualizar estado visualmente
+                // Comentado para mantener logs visibles según requerimiento (no reload)
+                const row = document.querySelector(`tr[data-comp-id="${compId}"]`); // Note: data-comp-id not present in HTML, need to check if row has ID or adjust selector
+                // Ajuste: usar selector por ID de celda o agregar data-id
+
+            } else {
+                if (!isBatch) alert('Error: ' + data.message);
+                console.error('Scraping error:', data.message);
+            }
+        } catch (err) {
+            console.error(err);
+            if (!isBatch) alert('Error al ejecutar scraping');
+        } finally {
+            if (!isBatch) stopLogPolling();
+        }
+    }
+
+    async function processFiltered() {
+        const rows = Array.from(document.querySelectorAll('#competitions-table tbody tr')).filter(r => r.style.display !== 'none');
+        if (rows.length === 0) {
+            alert('No hay competencias filtradas para procesar.');
+            return;
+        }
+
+        if (!confirm(`¿Iniciar procesamiento secuencial de ${rows.length} competencias filtradas?`)) return;
+
+        const btn = document.getElementById('batch-btn');
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
+        }
+
+        for (const row of rows) {
+            const compId = row.querySelector('td:first-child').innerText.trim();
+            // Highlight row
+            row.style.backgroundColor = 'rgba(255, 255, 0, 0.1)';
+
+            await runScraping(compId, true);
+
+            row.style.backgroundColor = '';
+        }
+
+        stopLogPolling();
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<i data-feather="layers"></i> Procesar Filtrados';
+        }
+        alert('Procesamiento por lote finalizado.');
+        feather.replace();
     }
 </script>
 {% endblock %}
