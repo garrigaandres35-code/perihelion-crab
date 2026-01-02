@@ -71,7 +71,7 @@ def run_competition_scraping():
     try:
         from app.modules.scraping import ElTurfScraper, PDFScraperManager
         from app.modules.scraping.scraping_config import ScrapingConfig
-
+        from app.modules.scraping.utils import check_scraping_status
         
         data = request.json or {}
         comp_id = data.get('competition_id')
@@ -96,14 +96,27 @@ def run_competition_scraping():
         
         logging_messages = []
         
-        # 1. Web Scraping - Programas
+        # Check existing status
+        current_status = check_scraping_status(competition)
+        logging_messages.append(f"Pre-check: P={current_status['P']}, R={current_status['R']}, V={current_status['V']}")
+        
         scraper = ElTurfScraper(fecha=fecha, hipodromo=hipodromo)
-        prog_result = scraper.scrape_programas()
-        logging_messages.append(f"Programas: {'OK' if prog_result.get('success') else 'Error'}")
+        
+        # 1. Web Scraping - Programas
+        if not current_status['P']:
+            prog_result = scraper.scrape_programas()
+            logging_messages.append(f"Programas: {'OK' if prog_result.get('success') else 'Error'}")
+        else:
+            prog_result = {'success': True, 'skipped': True, 'message': 'Already exists'}
+            logging_messages.append("Programas: Skipped (Exists)")
         
         # 2. Web Scraping - Resultados
-        res_result = scraper.scrape_resultados()
-        logging_messages.append(f"Resultados: {'OK' if res_result.get('success') else 'Error'}")
+        if not current_status['R']:
+            res_result = scraper.scrape_resultados()
+            logging_messages.append(f"Resultados: {'OK' if res_result.get('success') else 'Error'}")
+        else:
+            res_result = {'success': True, 'skipped': True, 'message': 'Already exists'}
+            logging_messages.append("Resultados: Skipped (Exists)")
         
         # 3. PDF Scraping (Batch for track)
         # Note: This processes all PDFs in the track folder. 
@@ -111,45 +124,22 @@ def run_competition_scraping():
         # But PDFScraperManager.process_directory takes 'track'.
         # We'll run it and assume it handles what's there.
         pdf_manager = PDFScraperManager(track=hipodromo)
-        pdf_result = pdf_manager.process_directory(track=hipodromo, target_date=fecha)
+        # Pass target_date to allow content-based filtering
+        pdf_result = pdf_manager.process_directory(track=hipodromo, target_date=fecha) 
         logging_messages.append(f"PDFs: {pdf_result.get('processed', 0)} procesados, {pdf_result.get('failed', 0)} fallidos")
         
         # Determine Status
-        # If at least one web scrape worked, we call it 'Parcial' or 'Scraper'
-        success_prog = prog_result.get('success')
-        success_res = res_result.get('success')
-        
-        # Logic: 
-        # Scraper = Programas AND Resultados AND Volantes (V)
-        
         # Check P & R
         success_prog = prog_result.get('success', False)
         success_res = res_result.get('success', False)
         
-        # Check V (Volantes)
-        volante_success = False
-        try:
-            from pathlib import Path
-            import glob
-            
-            date_str = competition.event_date.strftime('%Y-%m-%d')
-            date_fmt_2 = competition.event_date.strftime('%d-%m-%Y')
-            
-            if competition.venue and competition.venue.abbreviation:
-                track = competition.venue.abbreviation.lower()
-                json_dir = Path(ScrapingConfig.PATH_PDF_SCRAPING) / 'json' / track
-                if json_dir.exists():
-                    for json_file in json_dir.glob('*.json'):
-                        try:
-                            with open(json_file, 'r', encoding='utf-8') as f:
-                                content = f.read(1000)
-                                if f'"fecha": "{date_str}"' in content or f'"fecha": "{date_fmt_2}"' in content:
-                                    volante_success = True
-                                    break
-                        except:
-                            continue
-        except Exception as e:
-            print(f"Error checking PDF status: {e}")
+        # Check V (Volantes) logic is now partially handled by check_scraping_status
+        # But after running PDF scraping, we should re-check status or trust the process result?
+        # Let's rely on standard check_scraping_status logic AGAIN to be sure what we have on disk
+        
+        final_status_flags = check_scraping_status(competition)
+        volante_success = final_status_flags['V']
+
 
         new_status = 'Parcial'
         # Log status components for better debugging if needed

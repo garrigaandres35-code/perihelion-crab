@@ -380,10 +380,6 @@ def scraping():
     }
     
     # Get competitions suitable for scraping (Activa or Parcial)
-    # We want to group them or list them so the user can select.
-    # The UI requirement: "permitir seleccionar los Recintos o Hipodromos... visualizar en una tabla las Competencias involucradas"
-    # Actually, showing all Active/Parcial competitions in a table allows filtering by Venue in the frontend or backend.
-    # Let's pass the list of scrapable competitions.
     # Get active/partial competitions
     competitions = Competition.query.filter(
         Competition.status.in_(['Activa', 'Parcial', 'Scraper'])
@@ -427,12 +423,6 @@ def sync_competitions_status():
         for comp in competitions:
             status = check_scraping_status(comp)
             
-            # Logic for status update
-            # If all components are present -> Scraper
-            # If some are present -> Parcial
-            # If none -> Activa (if it was Scraper/Parcial, rollback? Or keep Activa?)
-            # Let's assume Activa is default.
-            
             new_status = 'Activa'
             if status['P'] and status['R'] and status['V']:
                 new_status = 'Scraper'
@@ -441,9 +431,6 @@ def sync_competitions_status():
             
             # Only update if changed
             if comp.status != new_status:
-                # If state is already DB, do we overwrite? 
-                # User complaint is about "Activa" persistence.
-                # Let's say we only touch Activa/Parcial/Scraper. Leave DB alone.
                 if comp.status != 'DB': 
                     comp.status = new_status
                     updated_count += 1
