@@ -1,15 +1,16 @@
-# Data Sports Lab
+# Data Sports Lab (Perihelion-Crab)
 
 📊 **Un espacio para aficionados a la ciencia de datos en el mundo de las competencias deportivas online**
 
 ## 🎯 Características
 
-- **Sistema de Scraping Modular**: Extracción de datos desde web y PDFs
-- **Arquitectura Escalable**: Diseñada para múltiples deportes (comenzando con hípica)
-- **UI Moderna y Premium**: Interfaz dark mode con glassmorphism y animaciones suaves
-- **Menú Dinámico**: Sistema de navegación configurable mediante JSON
-- **API RESTful**: Endpoints para integración con otros sistemas
-- **Base de Datos SQLite**: Almacenamiento eficiente para desarrollo/testing
+- **Sistema de Scraping Modular**: Extracción de datos desde web y PDFs.
+- **Navegación Robusta**: `ResultsDetailScraper` con manejo automático de prompts ("Si"), esperas inteligentes y selección por dropdown.
+- **Batch Scraping UI**: Capacidad de procesar lotes de carreras filtradas secuencialmente desde la interfaz de administración.
+- **Estandarización de Datos**: Sistema heurístico para uniformar resultados de diferentes hipódromos (HCH 20 cols vs Estándar 12 cols).
+- **UI Moderna y Premium**: Interfaz dark mode con glassmorphism y micro-animaciones.
+- **Menú Dinámico**: Sistema configurable mediante JSON.
+- **Base de Datos SQLite**: Almacenamiento eficiente con SQLAlchemy.
 
 ## 📁 Estructura del Proyecto
 
@@ -18,170 +19,36 @@ perihelion-crab/
 ├── app/
 │   ├── routes/          # Blueprints de Flask
 │   ├── modules/         # Módulos de negocio (scraping, análisis, modelos)
-│   ├── utils/           # Utilidades (menú, database)
 │   ├── static/          # CSS, JS, imágenes
-│   └── templates/       # Templates HTML
-├── config/              # Configuraciones JSON
+│   └── templates/       # Templates HTML (UI de Batch Scraping)
 ├── data/                # Base de datos y datos scrapeados
+│   └── web_scraping/
+│       └── resultados_detalle/  # JSONs de resultados avanzados
+├── config/              # Configuraciones JSON
 └── tests/               # Tests unitarios
 ```
 
-## 🚀 Instalación
+## 🚀 Instalación y Ejecución
 
-### 1. Clonar el repositorio
+1. **Entorno**: `python -m venv venv` y `venv\Scripts\activate`.
+2. **Dependencias**: `pip install -r requirements.txt`.
+3. **Arranque**: `python run.py`.
+4. **Acceso**: `http://localhost:8080`.
 
-```bash
-cd perihelion-crab
-```
+## 📊 Módulos de Scraping
 
-### 2. Crear entorno virtual
+- **Web (Programas)**: Playwright estándar.
+- **Web (Resultados)**: `ResultsDetailScraper` con navegación por dropdown y detección de prompts.
+- **PDF**: Procesamiento IA (LlamaExtract) con fallback de Regex.
 
-```bash
-python -m venv venv
-```
+## 🎨 Características de UI (Admin)
 
-### 3. Activar entorno virtual
-
-**Windows:**
-```bash
-venv\Scripts\activate
-```
-
-**Linux/Mac:**
-```bash
-source venv/bin/activate
-```
-
-### 4. Instalar dependencias
-
-```bash
-pip install -r requirements.txt
-```
-
-## ▶️ Ejecución
-
-### Modo Desarrollo
-
-```bash
-python run.py
-```
-
-La aplicación estará disponible en: `http://localhost:5000`
-
-### Variables de Entorno
-
-Edita el archivo `.env` para configurar:
-
-```env
-FLASK_DEBUG=True
-FLASK_PORT=5000
-SECRET_KEY=tu-clave-secreta
-DATABASE_URL=sqlite:///data/database.db
-```
-
-## 📊 Módulos
-
-### 1. Scraping
-
-- **Web Scraping**: Extracción de datos de sitios web de hipódromos
-- **PDF Scraping**: Procesamiento de volantes PDF (HCH, CHS, VSC)
-
-**Ubicación**: `app/modules/scraping/`
-
-**Integración**: Copia tu código existente a:
-- `web_scraper.py` - Para scraping web
-- `pdf_scraper.py` - Para procesamiento de PDFs
-
-### 2. Análisis
-
-Módulo para análisis de datos históricos e identificación de patrones.
-
-**Ubicación**: `app/modules/analysis/`
-
-### 3. Modelos Predictivos
-
-Framework para entrenamiento y ejecución de modelos de Machine Learning.
-
-**Ubicación**: `app/modules/models/`
-
-## 🎨 Características de UI
-
-- ✨ **Dark Mode Premium**: Paleta de colores moderna
-- 🌈 **Glassmorphism**: Efectos de vidrio esmerilado
-- 🎭 **Animaciones Suaves**: Transiciones y micro-interacciones
-- 📱 **Responsive**: Diseño adaptable a todos los dispositivos
-- 🎯 **Iconos Feather**: Sistema de iconos moderno
-
-### Gestión de Scraping 📊
-
-- **Indicadores de Estado**: Visualización granular del proceso de scraping:
-  - **P**: Programas (Web Scraping)
-  - **R**: Resultados (Web Scraping)
-  - **V**: Volantes (PDF Scraping)
-- **Sincronización de Estados**: Herramienta para auditar y corregir el estado de las competencias basado en archivos existentes.
-
-## 🔧 Configuración del Menú
-
-El menú se configura mediante `config/menu_config.json`:
-
-```json
-{
-  "menu_items": [
-    {
-      "id": "admin",
-      "label": "Administración",
-      "icon": "settings",
-      "submenu": [...]
-    }
-  ]
-}
-```
-
-## 🗄️ Base de Datos
-
-### Modelos Principales
-
-- **Sport**: Tipos de deportes/competencias
-- **Venue**: Hipódromos/Lugares
-- **Event**: Eventos/Reuniones
-- **Race**: Carreras
-- **Participant**: Competidores
-- **ScrapingLog**: Registro de scraping
-- **Configuration**: Configuraciones del sistema
-
-### Inicialización
-
-La base de datos se inicializa automáticamente al primer arranque con:
-- Deporte: Hípica
-- Hipódromos: HCH, CHS, VSC
-- Configuraciones por defecto
-
-## 🔌 API Endpoints
-
-### Venues
-```
-GET /api/venues
-```
-
-### Events
-```
-GET /api/events?venue=HCH&date=2024-12-09
-```
-
-### Races
-```
-GET /api/races/<event_id>
-```
-
-### Participants
-```
-GET /api/participants/<race_id>
-```
-
-### Statistics
-```
-GET /api/stats
-```
+- **Indicadores P/R/V**:
+  - **P**: Programas (Web List).
+  - **R**: Resultados Detallados (Carpeta `resultados_detalle`).
+  - **V**: Volantes (Extracción PDF AI).
+- **Batch Processing**: El botón "Procesar Filtrados" en la sección de Scraping permite ejecutar la cola de forma automática y secuencial.
+- **Filtros en Tiempo Real**: Filtrado dinámico por estado o hipódromo sin recargar la página.
 
 ## 🧪 Testing
 
@@ -189,40 +56,5 @@ GET /api/stats
 python -m pytest tests/
 ```
 
-## 📝 Próximos Pasos
-
-1. **Integrar tus proyectos de scraping existentes**
-   - Copiar código a `app/modules/scraping/`
-   - Actualizar rutas en `app/routes/scraping.py`
-
-2. **Desarrollar módulo de análisis**
-   - Implementar análisis estadístico
-   - Generar visualizaciones
-
-3. **Implementar modelos predictivos**
-   - Entrenar modelos ML
-   - Crear sistema de predicciones
-
-4. **Expandir a otros deportes**
-   - Agregar nuevos sports en la BD
-   - Adaptar scrapers
-
-## 🛠️ Tecnologías
-
-- **Backend**: Flask 3.0, SQLAlchemy
-- **Frontend**: HTML5, CSS3 (Vanilla), JavaScript
-- **Base de Datos**: SQLite
-- **Scraping**: Playwright, PyMuPDF, BeautifulSoup4, Llama-Parse
-- **Análisis**: Pandas, NumPy
-
-## 📄 Licencia
-
-Proyecto de desarrollo para análisis predictivo deportivo.
-
-## 👨‍💻 Desarrollo
-
-Desarrollado como plataforma modular y escalable para predicción deportiva, comenzando con hípica chilena (HCH, CHS, VSC).
-
 ---
-
-**¿Necesitas ayuda?** Revisa la documentación en `/admin` o contacta al equipo de desarrollo.
+**Desarrollado para análisis predictivo deportivo, comenzando con hípica chilena (HCH, CHS, VSC).**
