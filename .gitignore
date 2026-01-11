@@ -34,10 +34,15 @@ logs/
 .DS_Store
 Thumbs.db
 
-# Scraped data - IGNORE ALL DATA EXCEPT STRUCTURE
-data/web_scraping/
-data/pdf_scraping/
+# Scraped data - TRACK JSON FILES, IGNORE OTHER DATA
+# Ignore PDFs and other binary files
+data/pdf_scraping/**/*.pdf
+data/web_scraping/**/*.html
+data/web_scraping/**/*.png
 data/scraped/
+
+# Allow JSON files to be tracked
+!data/**/*.json
 !data/**/.gitkeep
 
 # Debug and Temporary files

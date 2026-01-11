@@ -1,0 +1,187 @@
+{
+  "nro_reunion": "82",
+  "fecha": "2025-12-12",
+  "recinto": "CHS",
+  "carreras": [
+    {
+      "numero": 1,
+      "opcion": [
+        11,
+        5,
+        2,
+        9
+      ],
+      "numero_competidores": 13
+    },
+    {
+      "numero": 2,
+      "opcion": [
+        8,
+        3,
+        5,
+        2
+      ],
+      "numero_competidores": 8
+    },
+    {
+      "numero": 3,
+      "opcion": [
+        8,
+        7,
+        3,
+        2
+      ],
+      "numero_competidores": 8
+    },
+    {
+      "numero": 4,
+      "opcion": [
+        2,
+        4,
+        3,
+        13
+      ],
+      "numero_competidores": 13
+    },
+    {
+      "numero": 5,
+      "opcion": [
+        7,
+        11,
+        6,
+        3
+      ],
+      "numero_competidores": 11
+    },
+    {
+      "numero": 6,
+      "opcion": [
+        5,
+        6,
+        2,
+        3
+      ],
+      "numero_competidores": 6
+    },
+    {
+      "numero": 7,
+      "opcion": [
+        1,
+        10,
+        12,
+        9
+      ],
+      "numero_competidores": 12
+    },
+    {
+      "numero": 8,
+      "opcion": [
+        1,
+        6,
+        8,
+        2
+      ],
+      "numero_competidores": 11
+    },
+    {
+      "numero": 9,
+      "opcion": [
+        1,
+        6,
+        7,
+        4
+      ],
+      "numero_competidores": 7
+    },
+    {
+      "numero": 10,
+      "opcion": [
+        5,
+        4,
+        2,
+        6
+      ],
+      "numero_competidores": 13
+    },
+    {
+      "numero": 11,
+      "opcion": [
+        4,
+        6,
+        12,
+        2
+      ],
+      "numero_competidores": 12
+    },
+    {
+      "numero": 12,
+      "opcion": [
+        9,
+        6,
+        4,
+        2
+      ],
+      "numero_competidores": 11
+    },
+    {
+      "numero": 13,
+      "opcion": [
+        15,
+        4,
+        10,
+        13
+      ],
+      "numero_competidores": 15
+    },
+    {
+      "numero": 14,
+      "opcion": [
+        12,
+        2,
+        9,
+        3
+      ],
+      "numero_competidores": 13
+    },
+    {
+      "numero": 15,
+      "opcion": [
+        9,
+        12,
+        1,
+        5
+      ],
+      "numero_competidores": 13
+    },
+    {
+      "numero": 16,
+      "opcion": [
+        1,
+        4,
+        10,
+        15
+      ],
+      "numero_competidores": 15
+    },
+    {
+      "numero": 17,
+      "opcion": [
+        1,
+        6,
+        8,
+        10
+      ],
+      "numero_competidores": 15
+    },
+    {
+      "numero": 18,
+      "opcion": [
+        2,
+        11,
+        14,
+        1
+      ],
+      "numero_competidores": 14
+    }
+  ]
+}

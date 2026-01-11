@@ -1,0 +1,127 @@
+{
+  "nro_reunion": "64",
+  "fecha": "2025-10-22",
+  "recinto": "VSC",
+  "carreras": [
+    {
+      "numero": 1,
+      "opcion": [
+        12,
+        11,
+        7,
+        9
+      ],
+      "numero_competidores": 14
+    },
+    {
+      "numero": 2,
+      "opcion": [
+        9,
+        6,
+        8,
+        1
+      ],
+      "numero_competidores": 11
+    },
+    {
+      "numero": 3,
+      "opcion": [
+        3,
+        1,
+        7,
+        6
+      ],
+      "numero_competidores": 9
+    },
+    {
+      "numero": 4,
+      "opcion": [
+        7,
+        12,
+        11,
+        6
+      ],
+      "numero_competidores": 12
+    },
+    {
+      "numero": 5,
+      "opcion": [
+        6,
+        9,
+        5,
+        1
+      ],
+      "numero_competidores": 10
+    },
+    {
+      "numero": 6,
+      "opcion": [
+        3,
+        5,
+        8,
+        6
+      ],
+      "numero_competidores": 8
+    },
+    {
+      "numero": 7,
+      "opcion": [
+        8,
+        11,
+        16,
+        5
+      ],
+      "numero_competidores": 16
+    },
+    {
+      "numero": 8,
+      "opcion": [
+        4,
+        13,
+        6,
+        9
+      ],
+      "numero_competidores": 13
+    },
+    {
+      "numero": 9,
+      "opcion": [
+        12,
+        7,
+        9,
+        5
+      ],
+      "numero_competidores": 12
+    },
+    {
+      "numero": 10,
+      "opcion": [
+        12,
+        6,
+        2,
+        14
+      ],
+      "numero_competidores": 14
+    },
+    {
+      "numero": 11,
+      "opcion": [
+        9,
+        4,
+        8,
+        10
+      ],
+      "numero_competidores": 15
+    },
+    {
+      "numero": 12,
+      "opcion": [
+        11,
+        12,
+        1,
+        13
+      ],
+      "numero_competidores": 14
+    }
+  ]
+}
