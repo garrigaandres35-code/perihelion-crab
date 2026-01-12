@@ -106,6 +106,7 @@ class Competition(db.Model):
     event_date = db.Column(db.Date, nullable=True)  # Nula por defecto
     active = db.Column(db.Boolean, default=True)
     status = db.Column(db.String(20), default='Activa')  # Activa, Scraper, Parcial, DB
+    pdf_volante_path = db.Column(db.String(500), nullable=True)  # Ruta al PDF del volante
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # Relationships
